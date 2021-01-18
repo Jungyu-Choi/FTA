@@ -227,6 +227,16 @@ async def regenerate_access_token():
     response = requests.post(
         "https://us.battle.net/oauth/token", data=data, auth=(setup.id, setup.pwd)
     )
+    print("1")
+    print(response)
+    print("2")
+    print(response.json())
+    print("3")
+    print(response.content)
+    print("4")
+    print(response.content.json())
+    print("5")
+    print(response.text)
     access_token = response.json()["access_token"]
     params["access_token"] = response.json()["access_token"]
     print(
