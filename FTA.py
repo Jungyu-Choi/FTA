@@ -83,25 +83,23 @@ async def on_guild_remove(guild):
 
 
 @bot.command()
-async def debug_leave_all_guilds(ctx):
-    if ctx.author.id == 279204767472025600:
-        for guild in bot.guilds:
-            await guild.leave()
-
-
-@bot.command()
 async def 토큰(ctx):
     params["namespace"] = "dynamic-kr"
     response = requests.get(
         "https://kr.api.blizzard.com/data/wow/token/index", params
     ).json()
 
-    data = [
+    value = [
         index["price"] for index in wow_token.find({}).sort("last_update_date_time", 1)
     ]
-    plt.plot(data)
+    date = [
+        datetime.datetime.fromtimestamp(query["last_update_date_time"] / 1000)
+        for query in wow_token.find({})
+    ]
+    plt.plot(date, value)
+    plt.gcf().autofmt_xdate()
     plt.ylabel("price")
-    plt.gca().axes.get_xaxis().set_visible(False)
+
     buffer = BytesIO()
     plt.savefig(buffer, format="png")
     buffer.seek(0)
@@ -131,26 +129,6 @@ async def 토큰(ctx):
     embed.set_thumbnail(url=image_url)
     embed.set_image(url="attachment://image.png")
     await ctx.send(file=file, embed=embed)
-
-
-@bot.command()
-async def 임베드(ctx):
-    params["namespace"] = "static-kr"
-    response = requests.get(
-        "https://kr.api.blizzard.com/data/wow/media/item/{}".format("171833"), params
-    ).json()
-    image_url = dict(response["assets"][0])["value"]
-
-    embed = discord.Embed(title="마력 깃든 암영 비단", colour=discord.Colour.blue())
-    embed.set_footer(text="경매장 가격은 1시간마다 새로고침 됩니다.")
-    embed.set_thumbnail(url=image_url)
-    embed.add_field(
-        name="가격:",
-        value="230:yellow_circle: 10:white_circle: 0:brown_circle:",
-        inline=False,
-    )
-
-    await ctx.send(embed=embed)
 
 
 @bot.command()
