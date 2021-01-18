@@ -160,7 +160,8 @@ async def 검색(ctx, *args, page=1):
     data = item.find_one({"name": name})
     if data is not None:
         items = live.find({"item.id": data["_id"]})
-        value = type_item = None
+        value = None
+        type_item = None
 
         for tmp in items:
             if value is None:
@@ -226,7 +227,8 @@ async def regenerate_access_token():
     response = requests.post(
         "https://us.battle.net/oauth/token", data=data, auth=(setup.id, setup.pwd)
     )
-    access_token = params["access_token"] = response.json()["access_token"]
+    access_token = response.json()["access_token"]
+    params["access_token"] = response.json()["access_token"]
     print(
         "[{}]access_token was regenerated : {}".format(
             time.strftime("%c", time.localtime(time.time())), access_token
