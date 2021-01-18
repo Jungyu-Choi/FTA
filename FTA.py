@@ -21,7 +21,7 @@ class FTA:
         # Get API account
         with open(".account", "r", encoding="utf-8") as t:
             self.id = t.readline().strip("\n")
-            self.pwd = t.readline()
+            self.pwd = t.readline().strip("\n")
         print("[API]{}/{}".format(self.id, self.pwd))
 
         # Bot Settings
