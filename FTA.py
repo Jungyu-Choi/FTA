@@ -115,8 +115,12 @@ async def 토큰(ctx):
     ).json()
     image_url = dict(response_image["assets"][0])["value"]
 
+    value = int(response["price"] / 10000)
+
     embed = discord.Embed(title="WOW 토큰", colour=discord.Colour.blue())
-    embed.add_field(name="가격", value=int(response["price"] / 10000))
+    embed.add_field(
+        name="가격", value="{}:yellow_circle:".format(int(response["price"] / 10000))
+    )
     embed.add_field(
         name="last_update_date_time",
         value=datetime.datetime.fromtimestamp(
