@@ -85,50 +85,54 @@ async def on_guild_remove(guild):
 @bot.command()
 async def 토큰(ctx):
     params["namespace"] = "dynamic-kr"
-    response = requests.get(
-        "https://kr.api.blizzard.com/data/wow/token/index", params
-    ).json()
+    try:
+        response = requests.get(
+            "https://kr.api.blizzard.com/data/wow/token/index", params
+        ).json()
+    except Exception as err:
+        print(err)
+    else:
+        value = [
+            index["price"]
+            for index in wow_token.find({}).sort("last_update_date_time", 1)
+        ]
+        date = [
+            datetime.datetime.fromtimestamp(query["last_update_date_time"] / 1000)
+            for query in wow_token.find({})
+        ]
+        plt.plot(date, value)
+        plt.gcf().autofmt_xdate()
+        plt.ylabel("price")
 
-    value = [
-        index["price"] for index in wow_token.find({}).sort("last_update_date_time", 1)
-    ]
-    date = [
-        datetime.datetime.fromtimestamp(query["last_update_date_time"] / 1000)
-        for query in wow_token.find({})
-    ]
-    plt.plot(date, value)
-    plt.gcf().autofmt_xdate()
-    plt.ylabel("price")
+        buffer = BytesIO()
+        plt.savefig(buffer, format="png")
+        buffer.seek(0)
+        file = discord.File(buffer, filename="image.png")
 
-    buffer = BytesIO()
-    plt.savefig(buffer, format="png")
-    buffer.seek(0)
-    file = discord.File(buffer, filename="image.png")
+        data = item.find_one({"name": "WoW 토큰"})
+        params["namespace"] = "static-kr"
+        response_image = requests.get(
+            "https://kr.api.blizzard.com/data/wow/media/item/{}".format(data["_id"]),
+            params,
+        ).json()
+        image_url = dict(response_image["assets"][0])["value"]
 
-    data = item.find_one({"name": "WoW 토큰"})
-    params["namespace"] = "static-kr"
-    response_image = requests.get(
-        "https://kr.api.blizzard.com/data/wow/media/item/{}".format(data["_id"]),
-        params,
-    ).json()
-    image_url = dict(response_image["assets"][0])["value"]
+        value = int(response["price"] / 10000)
 
-    value = int(response["price"] / 10000)
-
-    embed = discord.Embed(title="WOW 토큰", colour=discord.Colour.blue())
-    embed.add_field(
-        name="가격", value="{}:yellow_circle:".format(int(response["price"] / 10000))
-    )
-    embed.add_field(
-        name="last_update_date_time",
-        value=datetime.datetime.fromtimestamp(
-            response["last_updated_timestamp"] / 1000
-        ),
-        inline=False,
-    )
-    embed.set_thumbnail(url=image_url)
-    embed.set_image(url="attachment://image.png")
-    await ctx.send(file=file, embed=embed)
+        embed = discord.Embed(title="WOW 토큰", colour=discord.Colour.blue())
+        embed.add_field(
+            name="가격", value="{}:yellow_circle:".format(int(response["price"] / 10000))
+        )
+        embed.add_field(
+            name="last_update_date_time",
+            value=datetime.datetime.fromtimestamp(
+                response["last_updated_timestamp"] / 1000
+            ),
+            inline=False,
+        )
+        embed.set_thumbnail(url=image_url)
+        embed.set_image(url="attachment://image.png")
+        await ctx.send(file=file, embed=embed)
 
 
 @bot.command()
@@ -234,25 +238,28 @@ async def refresh_live_data():
 @tasks.loop(minutes=20.0)
 async def update_wow_token_price():
     params["namespace"] = "dynamic-kr"
-    response = requests.get(
-        "https://kr.api.blizzard.com/data/wow/token/index", params
-    ).json()
-
-    if not wow_token.count_documents(
-        {"last_update_date_time": response["last_updated_timestamp"]}
-    ):
-        wow_token.insert_one(
-            {
-                "last_update_date_time": response["last_updated_timestamp"],
-                "price": int(response["price"] / 10000),
-            }
-        )
-        print(
-            "[{}]WOW Token price was updated : {}".format(
-                time.strftime("%c", time.localtime(time.time())),
-                int(response["price"] / 10000),
+    try:
+        response = requests.get(
+            "https://kr.api.blizzard.com/data/wow/token/index", params
+        ).json()
+    except Exception as err:
+        print(err)
+    else:
+        if not wow_token.count_documents(
+            {"last_update_date_time": response["last_updated_timestamp"]}
+        ):
+            wow_token.insert_one(
+                {
+                    "last_update_date_time": response["last_updated_timestamp"],
+                    "price": int(response["price"] / 10000),
+                }
             )
-        )
+            print(
+                "[{}]WOW Token price was updated : {}".format(
+                    time.strftime("%c", time.localtime(time.time())),
+                    int(response["price"] / 10000),
+                )
+            )
 
     if wow_token.count_documents({}) > 504:
         wow_token.find_one_and_delete({}, sort=[("last_update_date_time", 1)])
