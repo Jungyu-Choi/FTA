@@ -223,16 +223,21 @@ async def regenerate_access_token():
 @tasks.loop(hours=1.0)
 async def refresh_live_data():
     params["namespace"] = "dynamic-kr"
-    live.drop()
-    auction_req = requests.get(
-        "https://kr.api.blizzard.com/data/wow/connected-realm/2116/auctions", params
-    )
-    live.insert_many(auction_req.json()["auctions"])
-    print(
-        "[{}]auction_live_data has refreshed".format(
-            time.strftime("%c", time.localtime(time.time()))
+
+    try:
+        auction_req = requests.get(
+            "https://kr.api.blizzard.com/data/wow/connected-realm/2116/auctions", params
         )
-    )
+    except Exception as err:
+        print(err)
+    else:
+        live.drop()
+        live.insert_many(auction_req.json()["auctions"])
+        print(
+            "[{}]auction_live_data has refreshed".format(
+                time.strftime("%c", time.localtime(time.time()))
+            )
+        )
 
 
 @tasks.loop(minutes=20.0)
