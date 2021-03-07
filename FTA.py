@@ -90,7 +90,11 @@ async def 토큰(ctx):
             "https://kr.api.blizzard.com/data/wow/token/index", params
         ).json()
     except Exception as err:
-        print(err)
+        print(
+            "[{}] Exception in requests token value : {}".format(
+                time.strftime("%c", time.localtime(time.time())), err
+            )
+        )
     else:
         value = [
             index["price"]
@@ -229,7 +233,11 @@ async def refresh_live_data():
             "https://kr.api.blizzard.com/data/wow/connected-realm/2116/auctions", params
         )
     except Exception as err:
-        print(err)
+        print(
+            "[{}] Exception in refresh_live_data() : {}".format(
+                time.strftime("%c", time.localtime(time.time())), err
+            )
+        )
     else:
         live.drop()
         live.insert_many(auction_req.json()["auctions"])
@@ -248,7 +256,11 @@ async def update_wow_token_price():
             "https://kr.api.blizzard.com/data/wow/token/index", params
         ).json()
     except Exception as err:
-        print(err)
+        print(
+            "[{}] Exception in update_wow_token_price() : {}".format(
+                time.strftime("%c", time.localtime(time.time())), err
+            )
+        )
     else:
         if not wow_token.count_documents(
             {"last_update_date_time": response["last_updated_timestamp"]}
